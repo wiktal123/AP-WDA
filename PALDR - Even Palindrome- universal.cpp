@@ -1,60 +1,50 @@
-#include <cmath>
-#include <cstdio>
-#include <vector>
 #include <iostream>
-#include <algorithm>
 #include <string>
 using namespace std;
 
-bool is_palindrome(string a)
-{
-    int l= a.size()-1;
-    for(int i =0; i <l; i++)
-    {
-        if(a[i]!=a[l-i]) return false;
+bool isPalindrome(const string& s) {
+    int i = 0, j = s.size() - 1;
+    while (i < j) {
+        if (s[i++] != s[j--]) return false;
     }
     return true;
 }
 
-bool is_valid(string line)
-{
-    int len= line.length()-1;
-    if((len+1)%2!=0 ) return false;
-    if(is_palindrome(line)) return true;
-    while(int i =0 < len-1)
-    {
-        bool is_G=false;
-        string cur;
-        for(int j =i; j<len; ++j)
+bool isValid(string line) {
+    if (!line.empty() && line.back() == '\r') {
+        line.pop_back();
+    }
+    if(line.length()==2 && !isPalindrome(line)) return false;
+    int len = line.length();
+    if (len % 2 != 0) return false; 
+
+    for (int start = 0; start < len-2; start += 2) {
+        bool is_g=false;
+        for(int end= start+2; end<len; end+=2)
         {
-            cur+=line[j];
-            cout<<j<<" cur "<< cur<<'\n';
-            //if((j-i)%2!=0 || (j-i)==0) continue;
-            if(is_palindrome(cur))
+            if (isPalindrome(line.substr(start, end)))
             {
-                i=j+1;
-                is_G=true;
-                //cout<<"jp100"<<cur;
-                if(j==len-1) return true;
+                is_g=true;
+                start=end+1;
                 break;
             }
         }
-        if(!is_G) return false;
-        if(is_G) cout<<line<<'\n';
+        if(!is_g) return false;
     }
-    return false;
+    return true;
 }
 
 int main() {
     int T;
-    cin>>T;
-    while(T--)
-    {
+    cin >> T;
+    cin.ignore(); 
+    while (T--) {
         string line;
-        cin>>line;
-        cout<<line<<'\n';
-        if(is_valid(line)) cout<<"YES"<<'\n';
-        else cout<<"NO"<<'\n'; 
+        getline(cin, line); 
+        if (isValid(line))
+            cout << "YES\n";
+        else
+            cout << "NO\n";
     }
     return 0;
 }
