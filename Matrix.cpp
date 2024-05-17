@@ -1,132 +1,87 @@
-#include <cmath>
-#include <cstdio>
-#include <vector>
-#include <iostream>
-#include <algorithm>
-#include <queue>
-#include <climits>
-#include <string>
+#include <bits/stdc++.h>
 using namespace std;
 
-//global variables
-int mn= INT_MAX;
-bool visited[100001];
-// main graph should be here also !!!!!!!!!!
+class UnionFind {
+public:
+    vector<int> parent, rank, isMachine;
 
-
-bool disconnect(int node, vector<pair<int,int>> graph[], vector<bool> arrayMachines) //graph traversing
-{
-
-    /*
-    Here must be implemented graph traversing for finding minimal cost of deleting road between two machines
-        -forwarding current minimal cost with road details
-        -returning as soon as machine is found
-        -deleting minimal cost edge (road) from the graph
-    */ 
-    
-    if(arrayMachines[node]) return true;
-    visited[node]=true;
-    for(auto neighbour: graph[node])
-    {
-        if(!visited[neighbour.first])
-        {
-
+    UnionFind(int n, const vector<int>& machines) : parent(n), rank(n, 0), isMachine(n, 0) {
+        iota(parent.begin(), parent.end(), 0);
+        for (int machine : machines) {
+            isMachine[machine] = 1;
         }
     }
-    return false;
-}
 
-// void dfs(int x, vector<pair<int, int>> streets[]){
-//     vis[x]=true;
-//     for(auto neighbour : streets[x]){
-//         if(!vis[neighbour.first]){
-//             current+=neighbour.second;
-//             //cout<<x<<' '<<neighbour.first<<endl;
-//             dfs(neighbour.first, streets);
-//             current-=neighbour.second;
-//         }
-//     }
-//     if(current>mx){
-//         mx=current;
-//         //cout<<mx<<' '<<x<<endl;
-//     }
-// }
-
-// int calculate_distance(int start, int target, int size) {
-//     vector<int> dist(size * size, INT_MAX);
-//     queue<int> q;
-//     dist[start] = 0;
-//     q.push(start);
-
-//     while (!q.empty()) {
-//         int u = q.front();
-//         q.pop();
-
-//         for (int v : graph[u]) {
-//             if (dist[u] + 1 < dist[v]) {
-//                 dist[v] = dist[u] + 1;
-//                 q.push(v);
-//                 if (v == target) return dist[v];
-//             }
-//         }
-//     }
-
-//     return dist[target] == INT_MAX ? -1 : dist[target];
-// }
-
-int minTime(vector<vector<int>> roads, vector<int> machines) // main algorythm
-{
-    /*
-    To implement:
-        -sorting roads vector by time cost
-        -adding edges (roads) to the graph in ascending order
-    */
-
-    //crucial variables
-    int res=0;
-    int size= roads.size()+1;
-    vector<pair<int,int>> graph[size];
-    vector<bool> arrayMachines(size,false);
-
-    for(auto machine : machines) // creating machines array
-    {
-        arrayMachines[machine]=true;
-    }
-
-    for(auto road: roads) // creating graph, road by road
-    {
-        graph[road[0]].push_back({road[1],road[2]});
-        graph[road[1]].push_back({road[0],road[2]});
-        if(arrayMachines[road[0]])
-        {
-            memset(visited,false,sizeof(visited)); // resetting global variables
-            mn=INT_MAX;
-
-            if(disconnect(road[0],graph, arrayMachines)) res+=mn; // checking for possible connection and deleting it
-        } 
-        else if(arrayMachines[road[1]])
-        {
-            memset(visited,false,sizeof(visited)); // resetting global variables
-            mn=INT_MAX;
-
-            if(disconnect(road[1],graph, arrayMachines)) res+=mn; // checking for possible connection and deleting it
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
         }
-                            
+        return parent[x];
     }
-    return res;
+
+    bool unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY]) {
+                parent[rootY] = rootX;
+                isMachine[rootX] |= isMachine[rootY];
+            } else if (rank[rootX] < rank[rootY]) {
+                parent[rootX] = rootY;
+                isMachine[rootY] |= isMachine[rootX];
+            } else {
+                parent[rootY] = rootX;
+                isMachine[rootX] |= isMachine[rootY];
+                rank[rootX]++;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool isMachineConnected(int x, int y) {
+        return isMachine[find(x)] && isMachine[find(y)];
+    }
+};
+
+int minTime(vector<vector<int>>& roads, vector<int>& machines) {
+    int n = roads.size() + 1;
+    UnionFind uf(n, machines);
+
+    sort(roads.begin(), roads.end(), [](const vector<int>& a, const vector<int>& b) {
+        return a[2] > b[2];
+    });
+
+    int totalTime = 0;
+
+    for (const auto& road : roads) {
+        int u = road[0], v = road[1], time = road[2];
+        if (uf.isMachineConnected(u, v)) {
+            totalTime += time;
+        } else {
+            uf.unite(u, v);
+        }
+    }
+
+    return totalTime;
 }
 
-int main()
-{
-    int nodes, machines, input;
-    cin>>nodes>>machines;
-    input=nodes-1;
-
-
-    while(input--)
-    {
-        int a, b, t;
-        cin>>a>>b>>t;
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vector<vector<int>> roads(n - 1);
+    for (int i = 0; i < n - 1; ++i) {
+        int u, v, t;
+        cin >> u >> v >> t;
+        roads[i] = {u, v, t};
     }
+
+    vector<int> machines(k);
+    for (int i = 0; i < k; ++i) {
+        cin >> machines[i];
+    }
+
+    cout << minTime(roads, machines) << endl;
     return 0;
 }
